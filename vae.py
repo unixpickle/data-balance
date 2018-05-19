@@ -3,7 +3,7 @@ A variational autoencoder for the MNIST training set.
 
 Usage:
 
-    $ python vae.py train
+    $ python vae.py train --steps 5000
 
 """
 
@@ -20,6 +20,8 @@ def main():
     args = parser.parse_args()
     if args.command_name == 'train':
         cmd_train(args)
+    elif args.command_name == 'sample':
+        cmd_sample(args)
     else:
         parser.error('missing sub-command')
 
@@ -34,9 +36,11 @@ def cmd_train(args):
     batch = dataset.make_one_shot_iterator().get_next()
     batch = tf.reshape(batch, [-1, 28, 28, 1])
     print('Creating encoder...')
-    encoded = encoder(batch)
+    with tf.variable_scope('encoder'):
+        encoded = encoder(batch)
     print('Creating decoder...')
-    decoded = decoder(encoded.sample())
+    with tf.variable_scope('decoder'):
+        decoded = decoder(encoded.sample())
     print('Creating loss...')
     bool_image = tf.cast(tf.round(batch), tf.bool)
     loss = encoder_kl_loss(encoded) - tf.reduce_sum(decoded.log_prob(bool_image)) / args.batch
@@ -63,6 +67,33 @@ def cmd_train(args):
                 saver.save(sess, checkpoint_name(args.checkpoint))
             if cur_step >= args.steps:
                 break
+
+
+def cmd_sample(args):
+    """
+    Sample images from a trained VAE.
+    """
+    if not os.path.exists(args.checkpoint):
+        sys.stderr.write('Checkpoint not found: ' + args.checkpoint + '\n')
+        sys.exit(1)
+    latents = tf.distributions.Normal().sample(sample_shape=[args.size ** 2, 128])
+    with tf.variable_scope('decoder'):
+        decoded = decoder(latents)
+    images = tf.cast(decoded.mode(), tf.uint8) * tf.constant(255, dtype=tf.uint8)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        print('Initializing variables...')
+        sess.run(tf.global_variables_initializer())
+        print('Restoring parameters...')
+        saver.restore(sess, checkpoint_name(args.checkpoint))
+        print('Producing images...')
+        images = sess.run(images)
+    print('Saving output file...')
+    image = np.array((args.size * 28, args.size * 28, 3))
+    for i in range(args.size):
+        for j in range(args.size):
+            image[i * 28: (i + 1) * 28, j * 28: (j + 1) * 28, :] = images[i * args.size + j]
+    Image.fromarray(image).save(args.output)
 
 
 def encoder(inputs):
@@ -132,12 +163,19 @@ def arg_parser():
     Create a command-line argument parser.
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', help='checkpoint path', default='./vae_checkpoint')
+
     subparsers = parser.add_subparsers(dest='command_name')
+
     cmd = subparsers.add_parser('train')
-    cmd.add_argument('--checkpoint', help='checkpoint path', default='./vae_checkpoint')
     cmd.add_argument('--lr', help='learning rate', default=0.001, type=float)
     cmd.add_argument('--batch', help='batch size', default=200, type=int)
     cmd.add_argument('--steps', help='total timesteps to take', default=10000, type=int)
+
+    cmd = subparsers.add_parser('sample')
+    cmd.add_argument('--size', help='sample grid side-length', default=4, type=int)
+    cmd.add_argument('--output', help='output filename', default='output.png')
+
     return parser
 
 
