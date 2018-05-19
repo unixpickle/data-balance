@@ -79,7 +79,7 @@ def cmd_sample(args):
     if not os.path.exists(args.checkpoint):
         sys.stderr.write('Checkpoint not found: ' + args.checkpoint + '\n')
         sys.exit(1)
-    latent_prior = tf.distributions.Normal(loc=0.0, scale=0.0)
+    latent_prior = tf.distributions.Normal(loc=0.0, scale=1.0)
     latents = latent_prior.sample(sample_shape=[args.size ** 2, 128])
     with tf.variable_scope('decoder'):
         decoded = decoder(latents)
