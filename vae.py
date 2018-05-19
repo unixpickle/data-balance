@@ -57,10 +57,12 @@ def cmd_train(args):
         while True:
             cur_loss, cur_step, _ = sess.run([loss, inc_step, minimize])
             print('step %d: loss=%f' % (cur_step, cur_loss))
-            if cur_step % 100 == 0:
+            if cur_step % 100 == 0 or cur_step >= args.steps:
                 if not os.path.exists(args.checkpoint):
                     os.mkdir(args.checkpoint)
                 saver.save(sess, checkpoint_name(args.checkpoint))
+            if cur_step >= args.steps:
+                break
 
 
 def encoder(inputs):
@@ -135,6 +137,7 @@ def arg_parser():
     cmd.add_argument('--checkpoint', help='checkpoint path', default='./vae_checkpoint')
     cmd.add_argument('--lr', help='learning rate', default=0.001, type=float)
     cmd.add_argument('--batch', help='batch size', default=200, type=int)
+    cmd.add_argument('--steps', help='total timesteps to take', default=10000, type=int)
     return parser
 
 
