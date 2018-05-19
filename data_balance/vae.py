@@ -100,6 +100,32 @@ def cmd_sample(args):
     Image.fromarray(image).save(args.output)
 
 
+def vae_features(images, checkpoint='vae_checkpoint', batch=200):
+    """
+    Turn the batch of images into a batch of VAE features.
+
+    Temporarily creates a graph and loads a VAE from the
+    supplied checkpoint directory.
+    """
+    with tf.Graph().as_default():
+        image_ph = tf.placeholder(tf.float32, shape=(None, 28, 28, 1))
+        print('Creating encoder...')
+        with tf.variable_scope('encoder'):
+            encoded = encoder(images)
+        saver = tf.train.Saver()
+        all_encoded = []
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            saver.restore(sess, checkpoint_name(checkpoint))
+            for i in range(0, len(images), batch):
+                if i + batch > len(images):
+                    batch_images = images[i:]
+                else:
+                    batch_images = images[i: i + batch]
+                all_encoded.append(sess.run(encoded, feed_dict={image_ph: batch_images}))
+    return np.array(all_encoded).reshape([-1, 28, 28, 1])
+
+
 def encoder(inputs):
     """
     Encode the input images as latent vectors.
