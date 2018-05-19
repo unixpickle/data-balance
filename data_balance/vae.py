@@ -15,7 +15,8 @@ import os
 from PIL import Image
 import numpy as np
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+
+from data_balance.data import mnist_training_batch
 
 
 def main():
@@ -34,10 +35,7 @@ def cmd_train(args):
     Train a VAE on the dataset.
     """
     print('Creating dataset...')
-    images = input_data.read_data_sets('MNIST_data', one_hot=True).train.images
-    dataset = tf.data.Dataset.from_tensor_slices(tf.constant(images)).batch(args.batch).repeat()
-    batch = dataset.make_one_shot_iterator().get_next()
-    batch = tf.reshape(batch, [-1, 28, 28, 1])
+    images = mnist_training_batch(args.batch)
     print('Creating encoder...')
     with tf.variable_scope('encoder'):
         encoded = encoder(batch)
