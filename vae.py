@@ -3,7 +3,8 @@ A variational autoencoder for the MNIST training set.
 
 Usage:
 
-    $ python vae.py train --steps 5000
+    $ python vae.py train
+    $ python vae.py sample --output samples.png
 
 """
 
@@ -11,6 +12,8 @@ import argparse
 import itertools
 import os
 
+from PIL import Image
+import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
@@ -76,7 +79,8 @@ def cmd_sample(args):
     if not os.path.exists(args.checkpoint):
         sys.stderr.write('Checkpoint not found: ' + args.checkpoint + '\n')
         sys.exit(1)
-    latents = tf.distributions.Normal().sample(sample_shape=[args.size ** 2, 128])
+    latent_prior = tf.distributions.Normal(loc=0.0, scale=0.0)
+    latents = latent_prior.sample(sample_shape=[args.size ** 2, 128])
     with tf.variable_scope('decoder'):
         decoded = decoder(latents)
     images = tf.cast(decoded.mode(), tf.uint8) * tf.constant(255, dtype=tf.uint8)
@@ -89,7 +93,7 @@ def cmd_sample(args):
         print('Producing images...')
         images = sess.run(images)
     print('Saving output file...')
-    image = np.array((args.size * 28, args.size * 28, 3))
+    image = np.zeros((args.size * 28, args.size * 28, 3), dtype='uint8')
     for i in range(args.size):
         for j in range(args.size):
             image[i * 28: (i + 1) * 28, j * 28: (j + 1) * 28, :] = images[i * args.size + j]
