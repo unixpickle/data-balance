@@ -32,6 +32,7 @@ def main():
     }
 
     print('| Task | ' + ' | '.join(balancers.keys()) + ' |')
+    print('|:-:|' + '|'.join([':-:'] * len(balancers.keys())) + '|')
 
     for task_name, (images, classes) in tasks.items():
         strs = [task_name]
