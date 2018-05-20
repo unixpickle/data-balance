@@ -102,7 +102,7 @@ def cmd_balance(args):
     codes are.
     """
     images, labels = balancing_task(list(range(10)), [1.0] * 10)
-    log_probs = log_probs_np(images, checkpoint=args.checkpoint)
+    log_probs = log_probs_np(images > 0.5, checkpoint=args.checkpoint)
     log_probs = np.exp(log_probs - np.max(log_probs))
     total = np.sum(log_probs)
     for class_idx in range(10):

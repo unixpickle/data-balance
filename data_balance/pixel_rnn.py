@@ -18,7 +18,7 @@ def rnn_log_probs_tf(inputs):
     Returns:
       A batch of log probabilities.
     """
-    seqs = tf.reshape(inputs, [-1, 28, 28])
+    seqs = tf.cast(tf.reshape(inputs, [-1, 28, 28]), tf.float32)
     shifted = tf.concat([tf.zeros_like(seqs[:, :1]), seqs[:, :-1]], axis=1)
     rnn = _make_rnn()
     out_layer = _make_out_layer()
