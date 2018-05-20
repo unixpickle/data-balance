@@ -88,6 +88,6 @@ def _make_rnn():
 
 
 def _make_out_layer():
-    weights = tf.get_variable('weights', dtype=tf.float32, shape=[128, 28])
-    biases = tf.get_variable('biases', dtype=tf.float32, shape=[28])
+    weights = tf.get_variable('weights', dtype=tf.float32, shape=[128, CHUNK_SIZE])
+    biases = tf.get_variable('biases', dtype=tf.float32, shape=[CHUNK_SIZE])
     return lambda x: tf.matmul(x, weights) + biases
