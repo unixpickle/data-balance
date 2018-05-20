@@ -47,7 +47,7 @@ def rnn_sample(batch_size):
     for _ in range(28):
         features, states = rnn(tf.cast(inputs, tf.float32), states)
         logits = out_layer(features)
-        inputs = tf.distributions.Bernoulli(logits=inputs).sample()
+        inputs = tf.distributions.Bernoulli(logits=logits).sample()
         result.append(inputs)
     return tf.reshape(tf.stack(result, axis=1), [-1, 28, 28, 1])
 
