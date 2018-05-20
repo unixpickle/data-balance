@@ -86,12 +86,14 @@ class VoronoiBalancer(VAEBalancer):
         Filter the noise vectors to those that should
         actually be used for sampling.
         """
+        latent_size = len(features[-1])
         num_samples = len(features) * self._samples_per_image()
         if not self._use_box:
-            return np.random.normal(size=[num_samples, 128])
+            return np.random.normal(size=[num_samples, latent_size])
         min_coords = np.min(features, axis=0)
         max_coords = np.max(features, axis=0)
-        return min_coords + np.random.uniform(size=[num_samples, 128]) * (max_coords - min_coords)
+        return (np.random.uniform(size=[num_samples, latent_size]) *
+                (max_coords - min_coords)) + min_coords
 
     @staticmethod
     def _samples_per_image():
