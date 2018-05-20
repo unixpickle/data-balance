@@ -30,7 +30,9 @@ def random_balancing_task(num_classes=2, validation=True):
       validation: a flag indicating if the validation set
         should be used (versus the test set).
     """
-    classes = np.random.shuffle(np.arange(10))[:num_classes]
+    all_classes = np.arange(10)
+    np.random.shuffle(all_classes)
+    classes = all_classes[:num_classes]
     amounts = np.random.uniform(size=num_classes)
     return balancing_task(classes, amounts)
 
@@ -59,6 +61,7 @@ def balancing_task(classes, fractions, validation=True):
     for class_idx, frac in zip(classes, fractions):
         all_images = dataset.images[dataset.labels == class_idx]
         num_images = min(len(all_images), max(0, int(frac * len(all_images))))
-        images.append(np.random.shuffle(all_images)[:num_images])
+        np.random.shuffle(all_images)
+        images.extend(all_images[:num_images])
         labels.extend([class_idx] * num_images)
     return np.array(images).reshape([-1, 28, 28, 1]), np.array(labels, dtype='int32')
