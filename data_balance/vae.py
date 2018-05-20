@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 LATENT_SIZE = 8
-USE_BINARY = False
+USE_BINARY = True
 
 
 def encoder(inputs):
