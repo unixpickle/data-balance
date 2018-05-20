@@ -17,7 +17,8 @@ import numpy as np
 import tensorflow as tf
 
 from data_balance.data import balancing_task, mnist_training_batch
-from data_balance.vae import LATENT_SIZE, checkpoint_name, decoder, encoder, encoder_kl_loss, vae_features
+from data_balance.vae import (LATENT_SIZE, USE_BINARY, checkpoint_name, decoder, encoder,
+                              encoder_kl_loss, vae_features)
 
 
 def main():
@@ -48,8 +49,9 @@ def cmd_train(args):
     with tf.variable_scope('decoder'):
         decoded = decoder(encoded.sample())
     print('Creating loss...')
-    bool_images = tf.cast(tf.round(images), tf.bool)
-    loss = encoder_kl_loss(encoded) - tf.reduce_sum(decoded.log_prob(bool_images)) / args.batch
+    if USE_BINARY:
+        images = images > 0.5
+    loss = encoder_kl_loss(encoded) - tf.reduce_sum(decoded.log_prob(images)) / args.batch
     print('Creating optimizer...')
     minimize = tf.train.AdamOptimizer(learning_rate=args.lr).minimize(loss)
 
@@ -85,8 +87,8 @@ def cmd_sample(args):
     latent_prior = tf.distributions.Normal(loc=0.0, scale=1.0)
     latents = latent_prior.sample(sample_shape=[args.size ** 2, LATENT_SIZE])
     with tf.variable_scope('decoder'):
-        decoded = decoder(latents)
-    images = tf.cast(decoded.mode(), tf.uint8) * tf.constant(255, dtype=tf.uint8)
+        decoded = tf.cast(decoder(latents).mode(), tf.float32)
+    images = tf.cast(decoded.mode() * 255, tf.uint8)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         print('Initializing variables...')
@@ -130,7 +132,7 @@ def cmd_reconstruct(args):
         encoded = encoder(images).mean()
     with tf.variable_scope('decoder'):
         decoded = tf.cast(decoder(encoded).mode(), tf.float32)
-    images = tf.concat([tf.tile(images, [1, 1, 1, 3]), decoded], axis=0)
+    images = tf.concat([images, decoded], axis=0)
     images = tf.cast(images * 255, tf.uint8)
     saver = tf.train.Saver()
     with tf.Session() as sess:

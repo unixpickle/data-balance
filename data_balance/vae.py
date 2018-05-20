@@ -7,7 +7,8 @@ import os
 import numpy as np
 import tensorflow as tf
 
-LATENT_SIZE = 10
+LATENT_SIZE = 8
+USE_BINARY = False
 
 
 def encoder(inputs):
@@ -55,7 +56,10 @@ def decoder(latent):
     out = tf.layers.dense(latent, 400, activation=tf.nn.relu)
     out = tf.layers.dense(latent, 28 * 28)
     out = tf.reshape(out, [-1, 28, 28, 1])
-    return tf.distributions.Bernoulli(logits=out)
+    if USE_BINARY:
+        return tf.distributions.Bernoulli(logits=out)
+    else:
+        return tf.distributions.Normal(loc=out, scale=tf.zeros_like(out) + 0.05)
 
 
 def vae_features(images, checkpoint='vae_checkpoint', batch=200):
