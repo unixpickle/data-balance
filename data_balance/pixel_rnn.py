@@ -41,11 +41,11 @@ def rnn_sample(batch_size):
     """
     rnn = _make_rnn()
     out_layer = _make_out_layer()
-    inputs = tf.zeros([batch_size, 28], dtype=tf.float32)
+    inputs = tf.zeros([batch_size, 28], dtype=tf.bool)
     states = rnn.zero_state(batch_size, tf.float32)
     result = []
     for _ in range(28):
-        features, states = rnn(inputs, states)
+        features, states = rnn(tf.cast(inputs, tf.float32), states)
         logits = out_layer(features)
         inputs = tf.distributions.Bernoulli(logits=inputs).sample()
         result.append(inputs)
