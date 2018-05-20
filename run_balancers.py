@@ -17,8 +17,12 @@ def main():
         '2, 3 (balanced)': balancing_task([2, 3], [1, 1]),
         '2 (x2), 3 (x1)': balancing_task([2, 3], [1, 1], dups=[2, 1]),
         '5 (10%), 1 (90%)': balancing_task([5, 1], [0.1, 0.9]),
+        '7 (10%), 8 (90%)': balancing_task([7, 8], [0.1, 0.9]),
+        '8 (10%), 7 (90%)': balancing_task([8, 7], [0.1, 0.9]),
         '2 (10%), 3 (90%)': balancing_task([2, 3], [0.1, 0.9]),
         '3 (10%), 2 (90%)': balancing_task([3, 2], [0.1, 0.9]),
+        '6 (30%), 9 (70%)': balancing_task([6, 9], [0.3, 0.7]),
+        '4 (30%), 9 (70%)': balancing_task([4, 9], [0.3, 0.7]),
     }
     print('Creating balancers...')
     balancers = {
