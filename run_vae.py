@@ -87,7 +87,7 @@ def cmd_sample(args):
     latent_prior = tf.distributions.Normal(loc=0.0, scale=1.0)
     latents = latent_prior.sample(sample_shape=[args.size ** 2, LATENT_SIZE])
     with tf.variable_scope('decoder'):
-        decoded = tf.clip_by_value(tf.cast(decoder(latents).mode(), tf.float32), 0, 1)
+        decoded = tf.clip_by_value(tf.cast(decoder(latents).sample(), tf.float32), 0, 1)
     images = tf.cast(decoded * 255, tf.uint8)
     saver = tf.train.Saver()
     with tf.Session() as sess:
