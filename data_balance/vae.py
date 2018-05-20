@@ -55,12 +55,12 @@ def decoder(latent):
     """
     out = tf.layers.dense(latent, 400, activation=tf.nn.relu)
     if USE_BINARY:
-        out = tf.layers.dense(latent, 28 * 28)
+        out = tf.layers.dense(out, 28 * 28)
         out = tf.reshape(out, [-1, 28, 28, 1])
         return tf.distributions.Bernoulli(logits=out)
     else:
-        mean = tf.reshape(tf.layers.dense(latent, 28 * 28), [-1, 28, 28, 1])
-        logstd = tf.reshape(tf.layers.dense(latent, 28 * 28), [-1, 28, 28, 1])
+        mean = tf.reshape(tf.layers.dense(out, 28 * 28), [-1, 28, 28, 1])
+        logstd = tf.reshape(tf.layers.dense(out, 28 * 28), [-1, 28, 28, 1])
         return tf.distributions.Normal(loc=mean, scale=tf.exp(logstd))
 
 
