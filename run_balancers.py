@@ -31,11 +31,14 @@ def main():
         'kde': KDEBalancer(VAE_CHECKPOINT)
     }
 
+    print('| Task | ' + ' | '.join(balancers.keys()) + ' |')
+
     for task_name, (images, classes) in tasks.items():
-        print('Evaluating on %s...' % task_name)
-        for balancer_name, balancer in balancers.items():
+        strs = [task_name]
+        for balancer in balancers.values():
             weights = balancer.assign_weights(images)
-            print('%s: %s' % (balancer_name, class_weights(classes, weights)))
+            strs.append(str(class_weights(classes, weights)))
+        print('| ' + ' | '.join(strs) + ' |')
 
 
 def class_weights(classes, weights):
