@@ -7,7 +7,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-LATENT_SIZE = 8
+LATENT_SIZE = 10
 
 
 def encoder(inputs):
@@ -21,7 +21,7 @@ def encoder(inputs):
       A distribution over latent vectors.
     """
     out = tf.layers.flatten(inputs)
-    out = tf.layers.dense(out, 256, activation=tf.tanh)
+    out = tf.layers.dense(out, 400, activation=tf.nn.relu)
     mean = tf.layers.dense(out, LATENT_SIZE)
     logstd = tf.layers.dense(out, LATENT_SIZE)
     return tf.distributions.Normal(loc=mean, scale=tf.exp(logstd))
@@ -52,7 +52,7 @@ def decoder(latent):
     Returns:
       A distribution over images.
     """
-    out = tf.layers.dense(latent, 256, activation=tf.tanh)
+    out = tf.layers.dense(latent, 400, activation=tf.nn.relu)
     out = tf.layers.dense(latent, 28 * 28)
     out = tf.reshape(out, [-1, 28, 28, 1])
     return tf.distributions.Bernoulli(logits=out)
