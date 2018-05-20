@@ -37,7 +37,7 @@ def random_balancing_task(num_classes=2, validation=True):
     return balancing_task(classes, amounts)
 
 
-def balancing_task(classes, fractions, validation=True):
+def balancing_task(classes, fractions, dups=None, validation=True):
     """
     Generate a data balancing task.
 
@@ -46,11 +46,16 @@ def balancing_task(classes, fractions, validation=True):
         class is a number from 0 to 9.
       fractions: the fraction of each class's test data to
         use (one per class in classes).
+      dups: if specified, a list specifying, for each
+        class, the number of times that class's data is
+        repeated.
 
     Returns:
       A tuple (images, labels), where images is a batch of
         28x28x1 images, and labels is a batch of integers.
     """
+    if dups is None:
+        dups = [1] * len(classes)
     dataset = input_data.read_data_sets('MNIST_data', one_hot=False)
     if validation:
         dataset = dataset.validation
@@ -58,10 +63,11 @@ def balancing_task(classes, fractions, validation=True):
         dataset = dataset.test
     images = []
     labels = []
-    for class_idx, frac in zip(classes, fractions):
+    for class_idx, frac, num_dups in zip(classes, fractions, dups):
         all_images = dataset.images[dataset.labels == class_idx]
         num_images = min(len(all_images), max(0, int(frac * len(all_images))))
         np.random.shuffle(all_images)
-        images.extend(all_images[:num_images])
-        labels.extend([class_idx] * num_images)
+        for _ in range(num_dups):
+            images.extend(all_images[:num_images])
+            labels.extend([class_idx] * num_images)
     return np.array(images).reshape([-1, 28, 28, 1]), np.array(labels, dtype='int32')

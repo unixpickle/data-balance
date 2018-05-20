@@ -13,6 +13,8 @@ VAE_CHECKPOINT = 'vae_checkpoint'
 def main():
     print('Creating tasks...')
     tasks = {
+        '2, 3 (balanced)': balancing_task([2, 3], [1, 1]),
+        '2 (x2), 3 (x1)': balancing_task([2, 3], [1, 1], dups=[2, 1]),
         '5 (10%), 1 (90%)': balancing_task([5, 1], [0.1, 0.9]),
         '2 (10%), 3 (90%)': balancing_task([2, 3], [0.1, 0.9]),
         '3 (10%), 2 (90%)': balancing_task([3, 2], [0.1, 0.9]),
