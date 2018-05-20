@@ -85,8 +85,7 @@ def cmd_sample(args):
     latents = latent_prior.sample(sample_shape=[args.size ** 2, LATENT_SIZE])
     with tf.variable_scope('decoder'):
         decoded = decoder(latents)
-    images = tf.cast(tf.clip_by_value(decoded.mode(), 0, 1), tf.uint8)
-    images = images * tf.constant(255, dtype=tf.uint8)
+    images = tf.cast(tf.clip_by_value(decoded.mode(), 0, 1) * 255, tf.uint8)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         print('Initializing variables...')
