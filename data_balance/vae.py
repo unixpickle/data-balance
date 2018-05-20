@@ -20,13 +20,8 @@ def encoder(inputs):
     Returns:
       A distribution over latent vectors.
     """
-    kwargs = {'kernel_size': 3, 'strides': 2, 'padding': 'same', 'activation': tf.nn.relu}
-    out = tf.layers.conv2d(inputs, filters=16, **kwargs)
-    out = tf.layers.conv2d(out, filters=32, **kwargs)
-    out = tf.layers.conv2d(out, filters=64, **kwargs)
-    out = tf.layers.flatten(out)
-    out = tf.layers.dense(out, 256, activation=tf.nn.relu)
-    out = tf.layers.dense(out, 128, activation=tf.nn.relu)
+    out = tf.layers.flatten(inputs)
+    out = tf.layers.dense(out, 256, activation=tf.tanh)
     mean = tf.layers.dense(out, LATENT_SIZE)
     logstd = tf.tanh(tf.layers.dense(out, LATENT_SIZE))
     return tf.distributions.Normal(loc=mean, scale=tf.exp(logstd))
@@ -57,15 +52,9 @@ def decoder(latent):
     Returns:
       A distribution over images.
     """
-    kwargs = {'kernel_size': 3, 'strides': 2, 'padding': 'same', 'activation': tf.nn.relu}
-    out = tf.layers.dense(latent, 128, activation=tf.nn.relu)
-    out = tf.layers.dense(latent, 256, activation=tf.nn.relu)
-    out = tf.layers.dense(out, 7 * 7 * 16, activation=tf.nn.relu)
-    out = tf.reshape(out, [-1, 7, 7, 16])
-    out = tf.layers.conv2d(out, filters=32, kernel_size=3, padding='same', activation=tf.nn.relu)
-    out = tf.layers.conv2d_transpose(out, filters=32, **kwargs)
-    out = tf.layers.conv2d_transpose(out, filters=32, **kwargs)
-    out = tf.layers.conv2d(out, filters=1, kernel_size=3, padding='same')
+    out = tf.layers.dense(latent, 256, activation=tf.tanh)
+    out = tf.layers.dense(latent, 28 * 28)
+    out = tf.reshape(out, [-1, 28, 28, 1])
     return tf.distributions.Bernoulli(logits=out)
 
 
