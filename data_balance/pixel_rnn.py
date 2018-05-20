@@ -52,7 +52,7 @@ def rnn_sample(batch_size):
     return tf.reshape(tf.stack(result, axis=1), [-1, 28, 28, 1])
 
 
-def rnn_log_probs_np(inputs, checkpoint='pixel_rnn_checkpoint', batch=64):
+def rnn_log_probs_np(images, checkpoint='pixel_rnn_checkpoint', batch=64):
     """
     Like rnn_log_probs_tf, but takes a numpy array and
     produces a numpy array.
