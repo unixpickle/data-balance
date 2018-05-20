@@ -8,6 +8,10 @@ import numpy as np
 import tensorflow as tf
 
 
+CHUNK_SIZE = 8
+TIMESTEPS = (28 * 28) // CHUNK_SIZE
+
+
 def rnn_log_probs_tf(inputs):
     """
     Get the log probability of the input images.
@@ -18,13 +22,13 @@ def rnn_log_probs_tf(inputs):
     Returns:
       A batch of log probabilities.
     """
-    seqs = tf.cast(tf.reshape(inputs, [-1, 28, 28]), tf.float32)
+    seqs = tf.cast(tf.reshape(inputs, [-1, TIMESTEPS, CHUNK_SIZE]), tf.float32)
     shifted = tf.concat([tf.zeros_like(seqs[:, :1]), seqs[:, :-1]], axis=1)
     rnn = _make_rnn()
     out_layer = _make_out_layer()
     states = rnn.zero_state(tf.shape(inputs)[0], tf.float32)
     logits = []
-    for i in range(28):
+    for i in range(TIMESTEPS):
         features, states = rnn(shifted[:, i], states)
         logits.append(out_layer(features))
     logits = tf.stack(logits, axis=1)
@@ -41,10 +45,10 @@ def rnn_sample(batch_size):
     """
     rnn = _make_rnn()
     out_layer = _make_out_layer()
-    inputs = tf.zeros([batch_size, 28], dtype=tf.bool)
+    inputs = tf.zeros([batch_size, CHUNK_SIZE], dtype=tf.bool)
     states = rnn.zero_state(batch_size, tf.float32)
     result = []
-    for _ in range(28):
+    for _ in range(TIMESTEPS):
         features, states = rnn(tf.cast(inputs, tf.float32), states)
         logits = out_layer(features)
         inputs = tf.distributions.Bernoulli(logits=logits).sample()
