@@ -58,6 +58,7 @@ def decoder(latent):
       A distribution over images.
     """
     kwargs = {'kernel_size': 3, 'strides': 2, 'padding': 'same', 'activation': tf.nn.relu}
+    out = tf.layers.dense(latent, 128, activation=tf.nn.relu)
     out = tf.layers.dense(latent, 256, activation=tf.nn.relu)
     out = tf.layers.dense(out, 7 * 7 * 16, activation=tf.nn.relu)
     out = tf.reshape(out, [-1, 7, 7, 16])
