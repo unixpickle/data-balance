@@ -7,6 +7,7 @@ from collections import Counter
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
+import tensorflow as tf
 
 from .vae import vae_features
 
@@ -45,11 +46,11 @@ class VAEBalancer(Balancer):
         self.checkpoint = checkpoint
 
     def assign_weights(self, images):
-        features = vae_features(images, checkpoint=self.checkpoint)
-        return self.vae_weights(features)
+        means, stds = vae_features(images, checkpoint=self.checkpoint)
+        return self.vae_weights(means, stds)
 
     @abstractmethod
-    def vae_weights(self, features):
+    def vae_weights(self, means, stds):
         """
         Assign weights based on VAE features.
         """
@@ -67,7 +68,7 @@ class VoronoiBalancer(VAEBalancer):
         self._use_box = use_box
         self._smooth = smooth
 
-    def vae_weights(self, features):
+    def vae_weights(self, features, _):
         counts = np.zeros([len(features)], dtype='float32')
         noises = self._noise_samples(features)
         for noise in noises:
@@ -110,7 +111,7 @@ class ClusterBalancer(VAEBalancer):
         super(ClusterBalancer, self).__init__(checkpoint)
         self.num_clusters = num_clusters
 
-    def vae_weights(self, features):
+    def vae_weights(self, features, _):
         mixture = GaussianMixture(n_components=self.num_clusters)
         mixture.fit(features)
         classes = mixture.predict(features)

@@ -72,13 +72,18 @@ def vae_features(images, checkpoint='vae_checkpoint', batch=200):
 
     Temporarily creates a graph and loads a VAE from the
     supplied checkpoint directory.
+
+    Returns:
+      A tuple (means, stddevs)
     """
     with tf.Graph().as_default():
         image_ph = tf.placeholder(tf.float32, shape=(None, 28, 28, 1))
         with tf.variable_scope('encoder'):
-            encoded = encoder(image_ph).mode()
+            encoded = encoder(image_ph)
+            means, stds = (encoded.loc, encoded.scale)
         saver = tf.train.Saver()
-        all_encoded = []
+        all_means = []
+        all_stds = []
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             saver.restore(sess, checkpoint_name(checkpoint))
@@ -87,8 +92,10 @@ def vae_features(images, checkpoint='vae_checkpoint', batch=200):
                     batch_images = images[i:]
                 else:
                     batch_images = images[i: i + batch]
-                all_encoded.extend(sess.run(encoded, feed_dict={image_ph: batch_images}))
-    return np.array(all_encoded)
+                sub_means, sub_stds = sess.run([means, stds], feed_dict={image_ph: batch_images})
+                all_means.extend(sub_means)
+                all_stds.extend(sub_stds)
+    return np.array(all_means), np.array(all_stds)
 
 
 def checkpoint_name(dir_name):

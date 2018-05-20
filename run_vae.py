@@ -103,10 +103,11 @@ def cmd_sample(args):
 
 def cmd_balance(args):
     """
-    Compute how class-balanced the VAE is.
+    Compute how class-balanced the means of the latent
+    codes are.
     """
     images, labels = balancing_task(list(range(10)), [1.0] * 10)
-    features = vae_features(images, checkpoint=args.checkpoint)
+    features, _ = vae_features(images, checkpoint=args.checkpoint)
     with tf.Session() as sess:
         dist = tf.distributions.Normal(loc=0.0, scale=1.0)
         logits = tf.reduce_sum(dist.log_prob(features), axis=-1)
