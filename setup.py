@@ -13,5 +13,5 @@ setup(
     author_email='unixpickle@gmail.com',
     license='MIT',
     packages=['data_balance'],
-    install_requires=['Pillow', 'numpy']
+    install_requires=['Pillow', 'numpy', 'sklearn']
 )

@@ -4,7 +4,7 @@ Evaluate all the balancers.
 
 import numpy as np
 
-from data_balance.balance import UniformBalancer, VoronoiBalancer
+from data_balance.balance import UniformBalancer, VoronoiBalancer, ClusterBalancer
 from data_balance.data import balancing_task
 
 VAE_CHECKPOINT = 'vae_checkpoint'
@@ -12,12 +12,18 @@ VAE_CHECKPOINT = 'vae_checkpoint'
 
 def main():
     print('Creating tasks...')
-    tasks = {'10% 2, 90% 3': balancing_task([2, 3], [0.1, 0.9])}
+    tasks = {
+        '5 (10%), 1 (90%)': balancing_task([5, 1], [0.1, 0.9]),
+        '2 (10%), 3 (90%)': balancing_task([2, 3], [0.1, 0.9]),
+        '3 (10%), 2 (90%)': balancing_task([3, 2], [0.1, 0.9]),
+    }
     print('Creating balancers...')
     balancers = {
         'uniform': UniformBalancer(),
         'voronoi': VoronoiBalancer(VAE_CHECKPOINT),
-        'box_voronoi': VoronoiBalancer(VAE_CHECKPOINT, use_box=True)
+        'box_voronoi': VoronoiBalancer(VAE_CHECKPOINT, use_box=True),
+        'smooth_voronoi': VoronoiBalancer(VAE_CHECKPOINT, use_box=True, smooth=0.01),
+        'cluster': ClusterBalancer(VAE_CHECKPOINT)
     }
 
     for task_name, (images, classes) in tasks.items():

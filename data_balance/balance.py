@@ -3,8 +3,10 @@ Class balancers.
 """
 
 from abc import ABC, abstractmethod
+from collections import Counter
 
 import numpy as np
+from sklearn.mixture import GaussianMixture
 
 from .vae import vae_features
 
@@ -60,17 +62,22 @@ class VoronoiBalancer(VAEBalancer):
     within their Voronoi cells.
     """
 
-    def __init__(self, checkpoint, use_box=False):
+    def __init__(self, checkpoint, use_box=False, smooth=0.0):
         super(VoronoiBalancer, self).__init__(checkpoint)
         self._use_box = use_box
+        self._smooth = smooth
 
     def vae_weights(self, features):
         counts = np.zeros([len(features)], dtype='float32')
-        noises = np.random.normal(size=[len(features) * self._samples_per_image(), 128])
         noises = self._noise_samples(features)
         for noise in noises:
-            neighbor_idx = np.argmin(np.sum(np.square(features - noise), axis=-1))
-            counts[neighbor_idx] += 1
+            sq_dists = np.sum(np.square(features - noise), axis=-1)
+            if self._smooth > 0:
+                cutoff = np.percentile(sq_dists, (1 - self._smooth) * 100)
+                counts[sq_dists > cutoff] += 1
+            else:
+                neighbor_idx = np.argmin(sq_dists)
+                counts[neighbor_idx] += 1
         return counts
 
     def _noise_samples(self, features):
@@ -92,3 +99,20 @@ class VoronoiBalancer(VAEBalancer):
         images.
         """
         return 1
+
+
+class ClusterBalancer(VAEBalancer):
+    """
+    A balancer that uses a clustering algorithm.
+    """
+
+    def __init__(self, checkpoint, num_clusters=10):
+        super(ClusterBalancer, self).__init__(checkpoint)
+        self.num_clusters = num_clusters
+
+    def vae_weights(self, features):
+        mixture = GaussianMixture(n_components=self.num_clusters)
+        mixture.fit(features)
+        classes = mixture.predict(features)
+        counts = Counter(classes)
+        return np.array([1 / counts[label] for label in classes])
