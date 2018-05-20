@@ -7,7 +7,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-LATENT_SIZE = 8
+LATENT_SIZE = 16
 
 
 def encoder(inputs):

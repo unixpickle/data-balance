@@ -113,12 +113,17 @@ class ClusterBalancer(VAEBalancer):
         super(ClusterBalancer, self).__init__(checkpoint)
         self.num_clusters = num_clusters
 
-    def vae_weights(self, features, _):
+    def vae_weights(self, means, stds):
         mixture = GaussianMixture(n_components=self.num_clusters)
-        mixture.fit(features)
-        classes = mixture.predict(features)
-        counts = Counter(classes)
-        return np.array([1 / counts[label] for label in classes])
+        mixture.fit(means)
+
+        sample_log_density = mixture.score_samples(means)
+        with tf.Graph().as_default():
+            dist = tf.distributions.Normal(loc=means, scale=stds)
+            latent_log_density = tf.reduce_sum(dist.log_prob(means), axis=-1)
+            weights = tf.nn.softmax(latent_log_density - sample_log_density)
+            with tf.Session() as sess:
+                return sess.run(weights)
 
 
 class DensityBalancer(VAEBalancer):
