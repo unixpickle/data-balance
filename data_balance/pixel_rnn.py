@@ -22,7 +22,7 @@ def rnn_log_probs_tf(inputs):
     shifted = tf.concat([tf.zeros_like(seqs[:, :1]), seqs[:, :-1]], axis=1)
     rnn = _make_rnn()
     out_layer = _make_out_layer()
-    states = rnn.zero_state(batch_size, tf.float32)
+    states = rnn.zero_state(tf.shape(inputs)[0], tf.float32)
     logits = []
     for i in range(28):
         features, states = rnn(shifted[:, i], states)
