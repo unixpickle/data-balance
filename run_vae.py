@@ -23,12 +23,14 @@ from data_balance.vae import checkpoint_name, decoder, encoder, encoder_kl_loss,
 def main():
     parser = arg_parser()
     args = parser.parse_args()
-    if args.command_name == 'train':
-        cmd_train(args)
-    elif args.command_name == 'sample':
-        cmd_sample(args)
-    elif args.command_name == 'balance':
-        cmd_balance(args)
+    cmds = {
+        'train': cmd_train,
+        'sample': cmd_sample,
+        'balance': cmd_balance,
+        'reconstruct': cmd_reconstruct,
+    }
+    if args.command_name in cmds:
+        cmds[args.command_name](args)
     else:
         parser.error('missing sub-command')
 
@@ -116,6 +118,36 @@ def cmd_balance(args):
         print('class %d: %f' % (class_idx, np.sum(probs[labels == class_idx])))
 
 
+def cmd_reconstruct(args):
+    """
+    Generate a picture of reconstructions.
+    """
+    if not os.path.exists(args.checkpoint):
+        sys.stderr.write('Checkpoint not found: ' + args.checkpoint + '\n')
+        sys.exit(1)
+    images = mnist_training_batch(args.size ** 2, validation=True)
+    with tf.variable_scope('encoder'):
+        encoded = encoder(images).mean()
+    with tf.variable_scope('decoder'):
+        decoded = tf.cast(decoder(encoded).mode(), tf.float32)
+    images = tf.concat([tf.tile(images, [1, 1, 1, 3]), decoded], axis=0)
+    images = tf.cast(images * 255, tf.uint8)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        print('Initializing variables...')
+        sess.run(tf.global_variables_initializer())
+        print('Restoring parameters...')
+        saver.restore(sess, checkpoint_name(args.checkpoint))
+        print('Producing images...')
+        images = sess.run(images)
+    print('Saving output file...')
+    image = np.zeros((args.size * 28 * 2, args.size * 28, 3), dtype='uint8')
+    for i in range(args.size * 2):
+        for j in range(args.size):
+            image[i * 28: (i + 1) * 28, j * 28: (j + 1) * 28, :] = images[i * args.size + j]
+    Image.fromarray(image).save(args.output)
+
+
 def arg_parser():
     """
     Create a command-line argument parser.
@@ -136,6 +168,10 @@ def arg_parser():
     cmd.add_argument('--output', help='output filename', default='output.png')
 
     cmd = subparsers.add_parser('balance')
+
+    cmd = subparsers.add_parser('reconstruct')
+    cmd.add_argument('--size', help='sample grid side-length', default=4, type=int)
+    cmd.add_argument('--output', help='output filename', default='output.png')
 
     return parser
 
