@@ -7,15 +7,19 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 
-def mnist_training_batch(batch_size):
+def mnist_training_batch(batch_size, validation=False):
     """
     Create a Tensor that fetches batches of images from
-    the MNIST training set.
+    the MNIST dataset.
 
     Returns:
       A [batch_size x 28 x 28 x 1] Tensor.
     """
-    images = input_data.read_data_sets('MNIST_data', one_hot=True).train.images
+    dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
+    if validation:
+        images = dataset.validation.images
+    else:
+        images = dataset.train.images
     dataset = tf.data.Dataset.from_tensor_slices(tf.constant(images)).batch(batch_size).repeat()
     batch = dataset.make_one_shot_iterator().get_next()
     return tf.reshape(batch, [-1, 28, 28, 1])
