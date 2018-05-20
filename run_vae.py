@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 
 from data_balance.data import balancing_task, mnist_training_batch
-from data_balance.vae import checkpoint_name, decoder, encoder, encoder_kl_loss, vae_features
+from data_balance.vae import LATENT_SIZE, checkpoint_name, decoder, encoder, encoder_kl_loss, vae_features
 
 
 def main():
@@ -83,7 +83,7 @@ def cmd_sample(args):
         sys.stderr.write('Checkpoint not found: ' + args.checkpoint + '\n')
         sys.exit(1)
     latent_prior = tf.distributions.Normal(loc=0.0, scale=1.0)
-    latents = latent_prior.sample(sample_shape=[args.size ** 2, 128])
+    latents = latent_prior.sample(sample_shape=[args.size ** 2, LATENT_SIZE])
     with tf.variable_scope('decoder'):
         decoded = decoder(latents)
     images = tf.cast(decoded.mode(), tf.uint8) * tf.constant(255, dtype=tf.uint8)
