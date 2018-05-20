@@ -86,7 +86,8 @@ def cmd_sample(args):
     latents = latent_prior.sample(sample_shape=[args.size ** 2, LATENT_SIZE])
     with tf.variable_scope('decoder'):
         decoded = decoder(latents)
-    images = tf.cast(decoded.mode(), tf.uint8) * tf.constant(255, dtype=tf.uint8)
+    images = tf.cast(tf.clip_by_value(decoded.mode(), 0, 1), tf.uint8)
+    images = images * tf.constant(255, dtype=tf.uint8)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         print('Initializing variables...')
@@ -129,8 +130,9 @@ def cmd_reconstruct(args):
     with tf.variable_scope('encoder'):
         encoded = encoder(images).mean()
     with tf.variable_scope('decoder'):
-        decoded = tf.cast(decoder(encoded).mode(), tf.float32)
-    images = tf.concat([tf.tile(images, [1, 1, 1, 3]), decoded], axis=0)
+        decoded = tf.clip_by_value(decoder(encoded).mode(), 0, 1)
+        decoded = tf.cast(decoded, tf.float32)
+    images = tf.concat([images, decoded], axis=0)
     images = tf.cast(images * 255, tf.uint8)
     saver = tf.train.Saver()
     with tf.Session() as sess:

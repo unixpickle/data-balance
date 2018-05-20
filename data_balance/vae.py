@@ -66,7 +66,7 @@ def decoder(latent):
     out = tf.layers.conv2d_transpose(out, filters=32, **kwargs)
     out = tf.layers.conv2d_transpose(out, filters=32, **kwargs)
     out = tf.layers.conv2d(out, filters=1, kernel_size=3, padding='same')
-    return tf.distributions.Bernoulli(logits=out)
+    return tf.distributions.Normal(loc=out, scale=0.1)
 
 
 def vae_features(images, checkpoint='vae_checkpoint', batch=200):
