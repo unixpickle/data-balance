@@ -10,21 +10,23 @@ from data_balance.data import balancing_task
 from data_balance.vae import vae_features
 
 VAE_CHECKPOINT = 'vae_checkpoint'
+COLORS = {2: '#ff0000', 3: '#0000ff'}
 
 
 def main():
-    images, classes = balancing_task([1, 2, 3, 4, 5, 6, 7, 8, 9, 0], [1.0] * 10)
+    # This task appears to be the hardest of the ones I've tried.
+    images, classes = balancing_task([3, 2], [0.1, 0.9])
 
     image_pca = run_pca(images)
     features, _ = vae_features(images)
     feature_pca = run_pca(features)
 
     pyplot.figure(1)
-    pyplot.scatter(feature_pca[:, 0], feature_pca[:, 1], c=list(classes))
+    pyplot.scatter(feature_pca[:, 0], feature_pca[:, 1], c=[COLORS[i] for i in classes])
     pyplot.show()
 
     pyplot.figure(2)
-    pyplot.scatter(image_pca[:, 0], image_pca[:, 1], c=list(classes))
+    pyplot.scatter(image_pca[:, 0], image_pca[:, 1], c=[COLORS[i] for i in classes])
     pyplot.show()
 
 
