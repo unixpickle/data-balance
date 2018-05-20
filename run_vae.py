@@ -16,8 +16,8 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 
-from data_balance.data import mnist_training_batch
-from data_balance.vae import checkpoint_name, decoder, encoder, encoder_kl_loss
+from data_balance.data import balancing_task, mnist_training_batch
+from data_balance.vae import checkpoint_name, decoder, encoder, encoder_kl_loss, vae_features
 
 
 def main():
@@ -27,6 +27,8 @@ def main():
         cmd_train(args)
     elif args.command_name == 'sample':
         cmd_sample(args)
+    elif args.command_name == 'balance':
+        cmd_balance(args)
     else:
         parser.error('missing sub-command')
 
@@ -99,6 +101,20 @@ def cmd_sample(args):
     Image.fromarray(image).save(args.output)
 
 
+def cmd_balance(args):
+    """
+    Compute how class-balanced the VAE is.
+    """
+    images, labels = balancing_task(list(range(10)), [1.0] * 10)
+    features = vae_features(images, checkpoint=args.checkpoint)
+    with tf.Session() as sess:
+        dist = tf.distributions.Normal(loc=0.0, scale=1.0)
+        logits = tf.reduce_sum(dist.log_prob(features), axis=-1)
+        probs = sess.run(tf.nn.softmax(logits))
+    for class_idx in range(10):
+        print('class %d: %f' % (class_idx, np.sum(probs[labels == class_idx])))
+
+
 def arg_parser():
     """
     Create a command-line argument parser.
@@ -117,6 +133,8 @@ def arg_parser():
     cmd = subparsers.add_parser('sample')
     cmd.add_argument('--size', help='sample grid side-length', default=4, type=int)
     cmd.add_argument('--output', help='output filename', default='output.png')
+
+    cmd = subparsers.add_parser('balance')
 
     return parser
 
