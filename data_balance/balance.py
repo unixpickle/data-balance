@@ -117,3 +117,35 @@ class ClusterBalancer(VAEBalancer):
         classes = mixture.predict(features)
         counts = Counter(classes)
         return np.array([1 / counts[label] for label in classes])
+
+
+class DensityBalancer(VAEBalancer):
+    """
+    A balancer that weights each datapoint according to
+    how well the datapoint can be identified by its mean.
+    """
+
+    def __init__(self, checkpoint, temperature=0.01, num_samples=1):
+        super(DensityBalancer, self).__init__(checkpoint)
+        self._temperature = temperature
+        self._num_samples = num_samples
+
+    def vae_weights(self, means, stds):
+        with tf.Graph().as_default():
+            mean_const = tf.constant(means)
+            data_dist = tf.distributions.Normal(loc=mean_const, scale=stds)
+
+            def loop_body(t, result_arr):
+                point_samples = tf.expand_dims(mean_const[t], 0)
+                point_samples = tf.tile(point_samples, [len(means), 1])
+                logits = tf.reduce_sum(data_dist.log_prob(point_samples), axis=-1)
+                ownership = tf.nn.softmax(logits * self._temperature)
+                return t + 1, result_arr.write(t, ownership[t])
+
+            arr = tf.TensorArray(tf.float32, size=len(means))
+            _, final_weights = tf.while_loop(cond=lambda t, _: t < len(means),
+                                             body=loop_body,
+                                             loop_vars=[tf.constant(0), arr])
+
+            with tf.Session() as sess:
+                return sess.run(final_weights.stack())
