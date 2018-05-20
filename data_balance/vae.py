@@ -16,7 +16,7 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 
-from data_balance.data import mnist_training_batch
+from .data import mnist_training_batch
 
 
 def main():
