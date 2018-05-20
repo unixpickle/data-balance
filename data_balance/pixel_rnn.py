@@ -21,7 +21,13 @@ def rnn_log_probs_tf(inputs):
     seqs = tf.reshape(inputs, [-1, 28, 28])
     shifted = tf.concat([tf.zeros_like(seqs[:, :1]), seqs[:, :-1]], axis=1)
     rnn = _make_rnn()
-    logits = tf.nn.dynamic_rnn(rnn, tf.cast(shifted, tf.float32), dtype=tf.float32)[0]
+    out_layer = _make_out_layer()
+    states = rnn.zero_state(batch_size, tf.float32)
+    logits = []
+    for i in range(28):
+        features, states = rnn(shifted[:, i], states)
+        logits.append(out_layer(features))
+    logits = tf.stack(logits, axis=1)
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=seqs, logits=logits)
     return tf.reduce_sum(loss, axis=[1, 2])
 
@@ -34,12 +40,15 @@ def rnn_sample(batch_size):
       A [batch x 28 x 28 x 1] Tensor.
     """
     rnn = _make_rnn()
+    out_layer = _make_out_layer()
     inputs = tf.zeros([batch_size, 28], dtype=tf.float32)
     states = rnn.zero_state(batch_size, tf.float32)
     result = []
     for _ in range(28):
-        inputs, states = rnn(inputs, states)
-        result.append(tf.distributions.Bernoulli(logits=inputs).sample)
+        features, states = rnn(inputs, states)
+        logits = out_layer(features)
+        inputs = tf.distributions.Bernoulli(logits=inputs).sample()
+        result.append(inputs)
     return tf.reshape(tf.stack(result, axis=1), [-1, 28, 28, 1])
 
 
@@ -72,3 +81,9 @@ def checkpoint_name(dir_name):
 
 def _make_rnn():
     return tf.nn.rnn_cell.LSTMCell(num_units=128, use_peepholes=True)
+
+
+def _make_out_layer():
+    weights = tf.get_variable('weights', dtype=tf.float32, shape=[128, 28])
+    biases = tf.get_variable('biases', dtype=tf.float32, shape=[28])
+    return lambda x: tf.matmul(x, weights) + biases
