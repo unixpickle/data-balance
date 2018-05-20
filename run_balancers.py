@@ -47,7 +47,7 @@ def class_weights(classes, weights):
     res = {}
     for class_num in sorted(set(classes)):
         res[class_num] = '%.3f' % np.sum(weights[classes == class_num])
-    return ', '.join(['%d: %s' % (key, val) for key, val in res.items()])
+    return '<br>'.join(['%d: %s' % (key, val) for key, val in res.items()])
 
 
 if __name__ == '__main__':
