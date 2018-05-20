@@ -48,8 +48,7 @@ def cmd_train(args):
     with tf.variable_scope('decoder'):
         decoded = decoder(encoded.sample())
     print('Creating loss...')
-    bool_images = tf.cast(tf.round(images), tf.bool)
-    loss = encoder_kl_loss(encoded) - tf.reduce_sum(decoded.log_prob(bool_images)) / args.batch
+    loss = encoder_kl_loss(encoded) - tf.reduce_sum(decoded.log_prob(images)) / args.batch
     print('Creating optimizer...')
     minimize = tf.train.AdamOptimizer(learning_rate=args.lr).minimize(loss)
 
