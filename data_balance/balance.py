@@ -7,6 +7,7 @@ from collections import Counter
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import KernelDensity
 import tensorflow as tf
 
 from .vae import vae_features
@@ -119,6 +120,25 @@ class ClusterBalancer(VAEBalancer):
         classes = mixture.predict(features)
         counts = Counter(classes)
         return np.array([1 / counts[label] for label in classes])
+
+
+class KDEBalancer(VAEBalancer):
+    """
+    A balancer that uses a kernel density estimator.
+    """
+
+    def vae_weights(self, means, stds):
+        mixture = KernelDensity()
+        mixture.fit(means)
+
+        with tf.Graph().as_default():
+            log_probs = tf.reduce_sum(tf.distributions.Normal(loc=0.0, scale=1.0).log_prob(means),
+                                      axis=-1)
+            with tf.Session() as sess:
+                log_probs = sess.run(log_probs)
+        logits = log_probs - mixture.score_samples(means)
+        logits -= np.max(logits)
+        return np.exp(logits)
 
 
 class DensityBalancer(VAEBalancer):
