@@ -25,8 +25,8 @@ def encoder(inputs):
     out = tf.layers.flatten(out)
     out = tf.layers.dense(out, 256, activation=tf.nn.relu)
     out = tf.layers.dense(out, 128, activation=tf.nn.relu)
-    mean = tf.layers.dense(out, 128)
-    logstd = tf.layers.dense(out, 128)
+    mean = tf.layers.dense(out, 32)
+    logstd = tf.tanh(tf.layers.dense(out, 32)) * 2
     return tf.distributions.Normal(loc=mean, scale=tf.exp(logstd))
 
 
