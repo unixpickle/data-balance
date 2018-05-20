@@ -66,11 +66,13 @@ def decoder(latent):
     out = tf.layers.conv2d(out, filters=32, kernel_size=3, padding='same', activation=tf.nn.relu)
     out = tf.layers.conv2d_transpose(out, filters=32, **kwargs)
     out = tf.layers.conv2d_transpose(out, filters=32, **kwargs)
-    out = tf.layers.conv2d(out, filters=1, kernel_size=3, padding='same')
     if USE_BINARY:
+        out = tf.layers.conv2d(out, filters=1, kernel_size=3, padding='same')
         return tf.distributions.Bernoulli(logits=out)
     else:
-        return tf.distributions.Normal(loc=out, scale=tf.zeros_like(out) + 0.05)
+        mean = tf.layers.conv2d(out, filters=1, kernel_size=3, padding='same')
+        logstd = tf.layers.conv2d(out, filters=1, kernel_size=3, padding='same')
+        return tf.distributions.Normal(loc=mean, scale=tf.exp(logstd))
 
 
 def vae_features(images, checkpoint='vae_checkpoint', batch=200):
