@@ -54,12 +54,14 @@ def decoder(latent):
       A distribution over images.
     """
     out = tf.layers.dense(latent, 400, activation=tf.nn.relu)
-    out = tf.layers.dense(latent, 28 * 28)
-    out = tf.reshape(out, [-1, 28, 28, 1])
     if USE_BINARY:
+        out = tf.layers.dense(latent, 28 * 28)
+        out = tf.reshape(out, [-1, 28, 28, 1])
         return tf.distributions.Bernoulli(logits=out)
     else:
-        return tf.distributions.Normal(loc=out, scale=tf.zeros_like(out) + 0.05)
+        mean = tf.reshape(tf.layers.dense(latent, 28 * 28), [-1, 28, 28, 1])
+        logstd = tf.reshape(tf.layers.dense(latent, 28 * 28), [-1, 28, 28, 1])
+        return tf.distributions.Normal(loc=mean, scale=tf.exp(logstd))
 
 
 def vae_features(images, checkpoint='vae_checkpoint', batch=200):
