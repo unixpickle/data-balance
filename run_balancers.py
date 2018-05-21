@@ -44,17 +44,10 @@ def main():
         for balancer in balancers.values():
             weights = balancer.assign_weights(images)
             entropies.append(class_entropy(classes, weights))
+        print(markdown_row(task_name, entropies))
         improvements.append(np.array(entropies) - entropies[0])
-        max_idx = np.argmax(entropies)
-        value_strs = []
-        for i, entropy in enumerate(entropies):
-            value_str = '%.3f' % entropy
-            if i == max_idx:
-                value_str = '**' + value_str + '**'
-            value_strs.append(value_str)
-        print('| ' + ' | '.join([task_name] + value_strs) + ' |')
     means = np.mean(improvements, axis=0)
-    print('| mean improvement | ' + ' | '.join('%.3f' % imp for imp in means) + ' |')
+    print(markdown_row('mean improvement', means))
 
 
 def class_entropy(classes, weights):
@@ -62,6 +55,17 @@ def class_entropy(classes, weights):
                        for class_num in set(classes)])
     probs = counts / np.sum(counts)
     return np.negative(np.sum(np.log(probs) * probs))
+
+
+def markdown_row(name, values):
+    max_idx = np.argmax(values)
+    value_strs = []
+    for i, value in enumerate(values):
+        value_str = '%.3f' % value
+        if i == max_idx:
+            value_str = '**' + value_str + '**'
+        value_strs.append(value_str)
+    return '| ' + ' | '.join([name] + value_strs) + ' |'
 
 
 if __name__ == '__main__':
