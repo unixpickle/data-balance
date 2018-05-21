@@ -39,19 +39,25 @@ def main():
     print('|:-:|' + '|'.join([':-:'] * len(balancers.keys())) + '|')
 
     for task_name, (images, classes) in tasks.items():
-        strs = [task_name]
+        entropies = []
         for balancer in balancers.values():
             weights = balancer.assign_weights(images)
-            strs.append(str(class_weights(classes, weights)))
-        print('| ' + ' | '.join(strs) + ' |')
+            entropies.append(class_entropy(classes, weights))
+        max_idx = np.argmax(entropies)
+        value_strs = []
+        for i, entropy in enumerate(entropies):
+            value_str = '%.3f' % entropy
+            if i == max_idx:
+                value_str = '**' + value_str + '**'
+            value_strs.append(value_str)
+        print('| ' + ' | '.join([task_name] + value_strs) + ' |')
 
 
-def class_weights(classes, weights):
-    weights = weights / np.sum(weights)
-    res = {}
-    for class_num in sorted(set(classes)):
-        res[class_num] = '%.3f' % np.sum(weights[classes == class_num])
-    return '<br>'.join(['%d: %s' % (key, val) for key, val in res.items()])
+def class_entropy(classes, weights):
+    counts = np.array([np.sum((np.array(classes) == class_num).astype('float32') * weights)
+                       for class_num in set(classes)])
+    probs = counts / np.sum(counts)
+    return np.negative(np.sum(np.log(probs) * probs))
 
 
 if __name__ == '__main__':
