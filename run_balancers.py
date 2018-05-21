@@ -38,11 +38,13 @@ def main():
     print('| Task | ' + ' | '.join(balancers.keys()) + ' |')
     print('|:-:|' + '|'.join([':-:'] * len(balancers.keys())) + '|')
 
+    improvements = []
     for task_name, (images, classes) in tasks.items():
         entropies = []
         for balancer in balancers.values():
             weights = balancer.assign_weights(images)
             entropies.append(class_entropy(classes, weights))
+        improvements.append(np.array(entropies) - entropies[0])
         max_idx = np.argmax(entropies)
         value_strs = []
         for i, entropy in enumerate(entropies):
@@ -51,6 +53,8 @@ def main():
                 value_str = '**' + value_str + '**'
             value_strs.append(value_str)
         print('| ' + ' | '.join([task_name] + value_strs) + ' |')
+    means = np.mean(improvements, axis=0)
+    print('| mean improvement | ' + ' | '.join('%.3f' % imp for imp in means) + ' |')
 
 
 def class_entropy(classes, weights):
