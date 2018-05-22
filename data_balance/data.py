@@ -7,6 +7,21 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 
+_MNIST_DATA = None
+
+
+def read_mnist():
+    """
+    Get an MNIST data object, with train, test, and
+    validation attributes, each with images and labels.
+    """
+    global _MNIST_DATA
+    if _MNIST_DATA:
+        return _MNIST_DATA
+    _MNIST_DATA = input_data.read_data_sets('MNIST_data', one_hot=False)
+    return _MNIST_DATA
+
+
 def mnist_training_batch(batch_size, validation=False):
     """
     Create a Tensor that fetches batches of images from
@@ -15,14 +30,22 @@ def mnist_training_batch(batch_size, validation=False):
     Returns:
       A [batch_size x 28 x 28 x 1] Tensor.
     """
-    dataset = _read_mnist()
+    dataset = read_mnist()
     if validation:
         images = dataset.validation.images
     else:
         images = dataset.train.images
-    dataset = tf.data.Dataset.from_tensor_slices(tf.constant(images)).batch(batch_size).repeat()
-    batch = dataset.make_one_shot_iterator().get_next()
-    return tf.reshape(batch, [-1, 28, 28, 1])
+    return images_training_batch(images.reshape([-1, 28, 28, 1]), batch_size)
+
+
+def images_training_batch(images, batch_size):
+    """
+    Generate a Tensor that iterates over batches of images
+    from a numpy array of images.
+    """
+    dataset = tf.data.Dataset.from_tensor_slices(tf.constant(images))
+    dataset = dataset.shuffle(len(images)).repeat().batch(batch_size)
+    return dataset.make_one_shot_iterator().get_next()
 
 
 def random_balancing_task(num_classes=2, validation=True):
@@ -60,7 +83,7 @@ def balancing_task(classes, fractions, dups=None, validation=True):
     """
     if dups is None:
         dups = [1] * len(classes)
-    dataset = _read_mnist()
+    dataset = read_mnist()
     if validation:
         dataset = dataset.validation
     else:
@@ -75,14 +98,3 @@ def balancing_task(classes, fractions, dups=None, validation=True):
             images.extend(all_images[:num_images])
             labels.extend([class_idx] * num_images)
     return np.array(images).reshape([-1, 28, 28, 1]), np.array(labels, dtype='int32')
-
-
-_MNIST_DATA = None
-
-
-def _read_mnist():
-    global _MNIST_DATA
-    if _MNIST_DATA:
-        return _MNIST_DATA
-    _MNIST_DATA = input_data.read_data_sets('MNIST_data', one_hot=False)
-    return _MNIST_DATA

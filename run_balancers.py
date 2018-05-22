@@ -5,7 +5,7 @@ Evaluate all the balancers.
 import numpy as np
 
 from data_balance.balance import (DensityBalancer, KDEBalancer, UniformBalancer, VoronoiBalancer,
-                                  ClusterBalancer)
+                                  ClusterBalancer, TrainBalancer)
 from data_balance.data import balancing_task
 
 VAE_CHECKPOINT = 'vae_checkpoint'
@@ -32,7 +32,8 @@ def main():
         'box_voronoi': VoronoiBalancer(VAE_CHECKPOINT, use_box=True),
         'smooth_voronoi': VoronoiBalancer(VAE_CHECKPOINT, use_box=True, smooth=0.01),
         'cluster': ClusterBalancer(VAE_CHECKPOINT),
-        'kde': KDEBalancer(VAE_CHECKPOINT)
+        'kde': KDEBalancer(VAE_CHECKPOINT),
+        'train': TrainBalancer(VAE_CHECKPOINT),
     }
 
     print('| Task | ' + ' | '.join(balancers.keys()) + ' |')

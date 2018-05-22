@@ -10,6 +10,7 @@ from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KernelDensity
 import tensorflow as tf
 
+from .data import images_training_batch, mnist_training_batch, read_mnist
 from .vae import vae_features
 
 
@@ -171,3 +172,69 @@ class DensityBalancer(VAEBalancer):
 
             with tf.Session() as sess:
                 return sess.run(final_weights.stack())
+
+
+class TrainBalancer(Balancer):
+    """
+    A balancer that tries to discriminate between the test
+    set and the training set, and weights samples based on
+    the log-loss under this classifier.
+    """
+
+    def __init__(self, checkpoint=None, num_iters=1000, batch_size=200, lr=0.001, debug=False):
+        assert batch_size % 2 == 0
+        self._checkpoint = checkpoint
+        self._use_vae = checkpoint is not None
+        self._num_iters = num_iters
+        self._batch_size = batch_size
+        self._lr = lr
+        self._debug = debug
+
+    def assign_weights(self, images):
+        with tf.Graph().as_default():
+            training_batch, testing_batch, eval_batch, eval_feed = self._network_inputs(images)
+            batch = tf.concat([training_batch, testing_batch], axis=0)
+            labels = tf.cast(tf.range(self._batch_size) >= (self._batch_size // 2), tf.float32)
+            labels = tf.expand_dims(labels, axis=1)
+            with tf.variable_scope('model'):
+                logits = self._apply_network(batch)
+                loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
+                loss = tf.reduce_mean(loss)
+            with tf.variable_scope('model', reuse=True):
+                eval_logits = self._apply_network(eval_batch)
+            minimize = tf.train.AdamOptimizer(learning_rate=self._lr).minimize(loss)
+            with tf.Session() as sess:
+                sess.run(tf.global_variables_initializer())
+                for _ in range(self._num_iters):
+                    _, loss_val = sess.run([minimize, loss])
+                    if self._debug:
+                        print(loss_val)
+                log_weights = sess.run(eval_logits, feed_dict=eval_feed)
+        log_weights -= np.max(log_weights)
+        # TODO: why should this be negative?
+        return np.exp(-log_weights)
+
+    def _network_inputs(self, images):
+        if not self._use_vae:
+            ph = tf.placeholder(tf.float32, shape=images.shape)
+            return (mnist_training_batch(self._batch_size // 2),
+                    images_training_batch(images, self._batch_size // 2),
+                    ph, {ph: images})
+        train_means, _ = vae_features(read_mnist().train.images.reshape([-1, 28, 28, 1]),
+                                      checkpoint=self._checkpoint)
+        test_means, _ = vae_features(images, checkpoint=self._checkpoint)
+        ph = tf.placeholder(tf.float32, shape=test_means.shape)
+        return (images_training_batch(train_means, self._batch_size // 2),
+                images_training_batch(test_means, self._batch_size // 2),
+                ph, {ph: test_means})
+
+    def _apply_network(self, batch):
+        if self._use_vae:
+            out = tf.layers.dense(batch, 64, activation=tf.nn.leaky_relu)
+            out = tf.layers.dense(batch, 32, activation=tf.nn.leaky_relu)
+        else:
+            out = tf.layers.conv2d(batch, 16, 3, strides=2, activation=tf.nn.leaky_relu)
+            out = tf.layers.conv2d(out, 32, 3, strides=2, activation=tf.nn.leaky_relu)
+            out = tf.layers.conv2d(out, 64, 3, activation=tf.nn.leaky_relu)
+            out = tf.reduce_mean(out, axis=[1, 2])
+        return tf.layers.dense(out, 1, kernel_initializer=tf.zeros_initializer())
