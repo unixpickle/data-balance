@@ -52,7 +52,7 @@ def main():
 
 
 def class_entropy(classes, weights):
-    counts = np.array([np.sum((np.array(classes) == class_num).astype('float32') * weights)
+    counts = np.array([np.sum(weights[np.array(classes) == class_num])
                        for class_num in set(classes)])
     probs = counts / np.sum(counts)
     return np.negative(np.sum(np.log(probs) * probs))
