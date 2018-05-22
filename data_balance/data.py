@@ -15,7 +15,7 @@ def mnist_training_batch(batch_size, validation=False):
     Returns:
       A [batch_size x 28 x 28 x 1] Tensor.
     """
-    dataset = input_data.read_data_sets('MNIST_data', one_hot=True)
+    dataset = _read_mnist()
     if validation:
         images = dataset.validation.images
     else:
@@ -60,7 +60,7 @@ def balancing_task(classes, fractions, dups=None, validation=True):
     """
     if dups is None:
         dups = [1] * len(classes)
-    dataset = input_data.read_data_sets('MNIST_data', one_hot=False)
+    dataset = _read_mnist()
     if validation:
         dataset = dataset.validation
     else:
@@ -75,3 +75,14 @@ def balancing_task(classes, fractions, dups=None, validation=True):
             images.extend(all_images[:num_images])
             labels.extend([class_idx] * num_images)
     return np.array(images).reshape([-1, 28, 28, 1]), np.array(labels, dtype='int32')
+
+
+_MNIST_DATA = None
+
+
+def _read_mnist():
+    global _MNIST_DATA
+    if _MNIST_DATA:
+        return _MNIST_DATA
+    _MNIST_DATA = input_data.read_data_sets('MNIST_data', one_hot=False)
+    return _MNIST_DATA
