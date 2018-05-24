@@ -232,7 +232,6 @@ class TrainBalancer(Balancer):
 
     def _apply_network(self, batch):
         if self._use_vae:
-            out = tf.layers.dense(batch, 64, activation=tf.nn.leaky_relu)
             out = tf.layers.dense(batch, 32, activation=tf.nn.leaky_relu)
         else:
             out = tf.layers.conv2d(batch, 16, 3, strides=2, activation=tf.nn.leaky_relu)
