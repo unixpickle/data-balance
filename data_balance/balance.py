@@ -211,7 +211,9 @@ class TrainBalancer(Balancer):
                         print(loss_val)
                 log_weights = sess.run(eval_logits, feed_dict=eval_feed)
         log_weights -= np.max(log_weights)
-        # TODO: why should this be negative?
+        # If the classifier is more confident that a sample
+        # is in the test set, that means it has higher
+        # density under the test set, so we weight it less.
         return np.exp(-log_weights)
 
     def _network_inputs(self, images):
